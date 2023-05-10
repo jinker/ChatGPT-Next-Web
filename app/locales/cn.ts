@@ -80,7 +80,11 @@ const cn = {
         de: "Deutsch",
         vi: "Vietnamese",
         ru: "Русский",
+<<<<<<< HEAD
         no: "Norsk",
+=======
+        cs: "Čeština",
+>>>>>>> c4210be (Czech language update)
       },
     },
     Avatar: "头像",

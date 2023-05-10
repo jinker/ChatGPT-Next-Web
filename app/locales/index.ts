@@ -8,7 +8,11 @@ import JP from "./jp";
 import DE from "./de";
 import VI from "./vi";
 import RU from "./ru";
+<<<<<<< HEAD
 import NO from "./no";
+=======
+import CS from "./cs";
+>>>>>>> c4210be (Czech language update)
 
 export type { LocaleType } from "./cn";
 
@@ -23,7 +27,11 @@ export const AllLangs = [
   "de",
   "vi",
   "ru",
+<<<<<<< HEAD
   "no",
+=======
+  "cs",
+>>>>>>> c4210be (Czech language update)
 ] as const;
 export type Lang = (typeof AllLangs)[number];
 
@@ -87,5 +95,9 @@ export default {
   de: DE,
   vi: VI,
   ru: RU,
+<<<<<<< HEAD
   no: NO,
+=======
+  cs: CS,
+>>>>>>> c4210be (Czech language update)
 }[getLang()] as typeof CN;
