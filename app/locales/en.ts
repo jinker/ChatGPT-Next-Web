@@ -198,6 +198,10 @@ const en: LocaleType = {
       SubTitle: "Access control enabled",
       Placeholder: "Need Access Code",
     },
+    Endpoint: {
+      Title: "Endpoint",
+      SubTitle: "Custom endpoint must start with http(s)://",
+    },
     Model: "Model",
     Temperature: {
       Title: "Temperature",
