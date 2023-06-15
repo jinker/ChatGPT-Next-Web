@@ -311,8 +311,10 @@ export const useChatStore = create<ChatStore>()(
             botMessage.streaming = false;
             userMessage.isError = !isAborted;
             botMessage.isError = !isAborted;
-
-            set(() => ({}));
+            get().updateCurrentSession((session) => {
+              session.messages = session.messages.concat();
+            });
+            // set(() => ({}));
             ChatControllerPool.remove(
               sessionIndex,
               botMessage.id ?? messageIndex,
