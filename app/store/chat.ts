@@ -268,8 +268,6 @@ export const useChatStore = create<ChatStore>()(
 
         // save user's and bot's message
         get().updateCurrentSession((session) => {
-          // session.messages.push(userMessage);
-          // session.messages.push(botMessage);
           session.messages = session.messages.concat([userMessage, botMessage]);
         });
 
@@ -283,7 +281,6 @@ export const useChatStore = create<ChatStore>()(
             if (message) {
               botMessage.content = message;
             }
-            // set(() => ({}));
             get().updateCurrentSession((session) => {
               session.messages = session.messages.concat();
             });
@@ -298,7 +295,6 @@ export const useChatStore = create<ChatStore>()(
               sessionIndex,
               botMessage.id ?? messageIndex,
             );
-            // set(() => ({}));
           },
           onError(error) {
             const isAborted = error.message.includes("aborted");
@@ -314,7 +310,6 @@ export const useChatStore = create<ChatStore>()(
             get().updateCurrentSession((session) => {
               session.messages = session.messages.concat();
             });
-            // set(() => ({}));
             ChatControllerPool.remove(
               sessionIndex,
               botMessage.id ?? messageIndex,
