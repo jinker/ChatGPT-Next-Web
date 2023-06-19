@@ -46,6 +46,7 @@ export interface ChatSession {
   stat: ChatStat;
   lastUpdate: number;
   lastSummarizeIndex: number;
+  clearContextIndex?: number;
 
   mask: Mask;
 }
@@ -258,7 +259,12 @@ export const useChatStore = create<ChatStore>()(
         });
 
         // get recent messages
-        const systemMessages = [systemInfo];
+        const systemMessages = [];
+        // if user define a mask with context prompts, wont send system info
+        if (session.mask.context.length === 0) {
+          systemMessages.push(systemInfo);
+        }
+
         const recentMessages = get().getMessagesWithMemory();
         const sendMessages = systemMessages.concat(
           recentMessages.concat(userMessage),
@@ -344,7 +350,12 @@ export const useChatStore = create<ChatStore>()(
       getMessagesWithMemory() {
         const session = get().currentSession();
         const modelConfig = session.mask.modelConfig;
-        const messages = session.messages.filter((msg) => !msg.isError);
+
+        // wont send cleared context messages
+        const clearedContextMessages = session.messages.slice(
+          session.clearContextIndex ?? 0,
+        );
+        const messages = clearedContextMessages.filter((msg) => !msg.isError);
         const n = messages.length;
 
         const context = session.mask.context.slice();
@@ -359,28 +370,30 @@ export const useChatStore = create<ChatStore>()(
           context.push(memoryPrompt);
         }
 
-        // get short term and unmemoried long term memory
+        // get short term and unmemorized long term memory
         const shortTermMemoryMessageIndex = Math.max(
           0,
           n - modelConfig.historyMessageCount,
         );
         const longTermMemoryMessageIndex = session.lastSummarizeIndex;
-        const oldestIndex = Math.max(
+
+        // try to concat history messages
+        const memoryStartIndex = Math.min(
           shortTermMemoryMessageIndex,
           longTermMemoryMessageIndex,
         );
-        const threshold = modelConfig.compressMessageLengthThreshold;
+        const threshold = modelConfig.max_tokens;
 
         // get recent messages as many as possible
         const reversedRecentMessages = [];
         for (
           let i = n - 1, count = 0;
-          i >= oldestIndex && count < threshold;
+          i >= memoryStartIndex && count < threshold;
           i -= 1
         ) {
           const msg = messages[i];
           if (!msg || msg.isError) continue;
-          count += msg.content.length;
+          count += estimateTokenLength(msg.content);
           reversedRecentMessages.push(msg);
         }
 
@@ -412,13 +425,16 @@ export const useChatStore = create<ChatStore>()(
       summarizeSession() {
         const session = get().currentSession();
 
+        // remove error messages if any
+        const messages = session.messages;
+
         // should summarize topic after chating more than 50 words
         const SUMMARIZE_MIN_LEN = 50;
         if (
           session.topic === DEFAULT_TOPIC &&
-          countMessages(session.messages) >= SUMMARIZE_MIN_LEN
+          countMessages(messages) >= SUMMARIZE_MIN_LEN
         ) {
-          const topicMessages = session.messages.concat(
+          const topicMessages = messages.concat(
             createMessage({
               role: "user",
               content: Locale.Store.Prompt.Topic,
@@ -440,13 +456,14 @@ export const useChatStore = create<ChatStore>()(
         }
 
         const modelConfig = session.mask.modelConfig;
-        let toBeSummarizedMsgs = session.messages.slice(
+        const summarizeIndex = Math.max(
           session.lastSummarizeIndex,
+          session.clearContextIndex ?? 0,
         );
-        
-        // remove error messages if any
-        toBeSummarizedMsgs = toBeSummarizedMsgs.filter((msg) => !msg.isError);
-  
+        let toBeSummarizedMsgs = messages
+          .filter((msg) => !msg.isError)
+          .slice(summarizeIndex);
+
         const historyMsgLength = countMessages(toBeSummarizedMsgs);
 
         if (historyMsgLength > modelConfig?.max_tokens ?? 4000) {
